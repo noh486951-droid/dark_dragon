@@ -1262,7 +1262,7 @@ let bossHeads = [];
 
 // 特訓核心數據
 let dpsHits = 0;
-const dpsTarget = 15; // 特訓目標次數
+const dpsTarget = 100; // 特訓目標次數
 let survivalTime = 0.0;
 let lastTime = 0;
 
