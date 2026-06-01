@@ -260,6 +260,46 @@ const JobConfigs = {
         updateSkill(player) {},
         drawSkill(ctx, player) {}
     },
+    dark_knight: {
+        className: "黑騎士",
+        speed: 2.0,
+        jumpForce: 8.5,
+        attackRange: 160,
+        attackCooldown: 1000, // 延遲久一點
+        skillCooldown: 2500, // 突刺CD
+        color: "#9333ea", // 深紫色
+        description: "槍連擊(Ctrl)：可跳打，發動慢。突刺(Shift)：水平突進。必須維持聖火(Q)！",
+        canJumpAttack: true,
+        initSkill(player) {
+            player.skillActive = false;
+        },
+        useSkill(player) {
+            if (!player.isGrounded || player.isClimbing) return false;
+            player.isSkillDashing = true;
+            player.skillDashTicks = 10;
+            player.skillCooldownTimer = this.skillCooldown;
+            SoundManager.play('dash');
+            return true;
+        },
+        updateSkill(player) {
+            if (player.isSkillDashing) {
+                player.vx = 18 * player.facing;
+                player.skillDashTicks--;
+                if (player.skillDashTicks <= 0) {
+                    player.isSkillDashing = false;
+                }
+            }
+        },
+        drawSkill(ctx, player) {
+            if (player.isSkillDashing) {
+                // 突刺殘影
+                ctx.fillStyle = "rgba(147, 51, 234, 0.4)";
+                ctx.beginPath();
+                ctx.ellipse(player.x + player.width/2 - player.facing * 30, player.y + player.height/2, 35, 20, 0, 0, Math.PI*2);
+                ctx.fill();
+            }
+        }
+    },
     shadower: {
         className: "神偷",
         speed: 2.5,
@@ -411,8 +451,8 @@ const StartingSetup = {
     shadower_2: { job: "shadower", x: 835, y: 440, label: "神偷2" },        // 右中大台
     buccaneer: { job: "pirate", x: 200, y: 585, label: "拳霸" },         // 地面極左
     hero_2: { job: "warrior", x: 450, y: 585, label: "英雄2" },          // 地面中左
-    darkknight_1: { job: "warrior", x: 550, y: 585, label: "黑騎1" },    // 地面中右
-    darkknight_2: { job: "warrior", x: 700, y: 585, label: "黑騎2" },    // 地面右
+    darkknight_1: { job: "dark_knight", x: 550, y: 585, label: "黑騎1" },    // 地面中右
+    darkknight_2: { job: "dark_knight", x: 700, y: 585, label: "黑騎2" },    // 地面右
     marksman: { job: "archer", x: 835, y: 550, label: "神射手" },        // 右下大台
     nightlord: { job: "thief", x: 290, y: 270, label: "夜使者" },        // 左高浮島
     bowmaster: { job: "archer", x: 250, y: 430, label: "箭神" }          // 左低浮島
@@ -839,7 +879,8 @@ class Player {
 
     attack() {
         // 空中禁止按攻擊鍵、爬繩禁止攻擊、冷卻中禁止攻擊
-        if (this.isClimbing || !this.isGrounded || this.attackCooldownTimer > 0) return;
+        if (this.isClimbing || this.attackCooldownTimer > 0) return;
+        if (!this.isGrounded && !this.config.canJumpAttack) return;
         
         this.attackCooldownTimer = this.config.attackCooldown;
         // 攻擊僵直時間拉長：等於攻擊冷卻時間 100% (原本是 80%)
@@ -849,7 +890,7 @@ class Player {
         const facingOffset = this.facing === 1 ? this.width : 0;
         
         // 根據職業生成不同的打擊區域或投射物
-        if (this.jobType === 'warrior') { // 劍士/黑騎：前方弧形揮砍
+        if (this.jobType === 'warrior' || this.jobType === 'dark_knight') { 
             // 建立近戰打擊範圍
             const hitArea = {
                 x: this.facing === 1 ? this.x + this.width : this.x - this.config.attackRange,
@@ -858,23 +899,42 @@ class Player {
                 height: this.height + 24
             };
 
-            // 繪製揮砍光弧粒子
-            for (let i = 0; i < 8; i++) {
-                particles.push(new Particle(
-                    hitArea.x + Math.random() * hitArea.width,
-                    hitArea.y + Math.random() * hitArea.height,
-                    this.facing * (1 + Math.random() * 2),
-                    (Math.random() - 0.5) * 2,
-                    "rgba(254, 240, 138, 0.7)",
-                    15
-                ));
+            if (this.jobType === 'dark_knight') {
+                // 繪製槍連擊深紫色光效
+                for (let i = 0; i < 12; i++) {
+                    particles.push(new Particle(
+                        hitArea.x + Math.random() * hitArea.width,
+                        hitArea.y + Math.random() * hitArea.height,
+                        this.facing * (2 + Math.random() * 4),
+                        (Math.random() - 0.5) * 3,
+                        "rgba(147, 51, 234, 0.8)",
+                        18
+                    ));
+                }
+            } else {
+                // 原本的戰士揮砍光弧粒子
+                for (let i = 0; i < 8; i++) {
+                    particles.push(new Particle(
+                        hitArea.x + Math.random() * hitArea.width,
+                        hitArea.y + Math.random() * hitArea.height,
+                        this.facing * (1 + Math.random() * 2),
+                        (Math.random() - 0.5) * 2,
+                        "rgba(254, 240, 138, 0.7)",
+                        15
+                    ));
+                }
             }
 
             // 判定是否打到龍王頭部
             bossHeads.forEach(head => {
                 if (checkOverlap(hitArea, head)) {
-                    for (let n = 0; n < 1 + this.lightningBuff; n++) {
-                        damageBoss(head);
+                    const hitCount = this.jobType === 'dark_knight' ? 2 : 1; // 槍連擊2段傷害
+                    for (let h = 0; h < hitCount; h++) {
+                        for (let n = 0; n < 1 + this.lightningBuff; n++) {
+                            setTimeout(() => {
+                                if (isGameRunning) damageBoss(head);
+                            }, h * 150); // 稍微延遲造成連續打擊感
+                        }
                     }
                 }
             });
@@ -1305,6 +1365,10 @@ let expectedQuizAnswer = "";
 let mageDispelTimer = -1.0;
 let isMageDispelActive = false;
 
+// 黑騎士神聖之火消除
+let dkDispelTimer = -1.0;
+let isDkDispelActive = false;
+
 // 竹筍白雷機制
 let bamboos = [];
 let bambooSpawnTimer = 10.0;
@@ -1335,13 +1399,20 @@ window.addEventListener('keydown', (e) => {
     // Q鍵 魔心防禦
     if ((e.key === 'q' || e.key === 'Q') && !keys['q']) {
         keys['q'] = true;
-        if (player && isGameRunning && !isGameOver && !isQuizActive && player.jobType === 'mage') {
-            if (isMageDispelActive) {
+        if (player && isGameRunning && !isGameOver && !isQuizActive) {
+            if (player.jobType === 'mage' && isMageDispelActive) {
                 isMageDispelActive = false;
                 mageDispelTimer = 5.0 + Math.random() * 5.0; // 重置下次發動時間
                 hideDispelAlertBanner();
                 SoundManager.play('click');
                 triggerDispelAlertBanner("✨ 魔心防禦已重新啟動！");
+                setTimeout(hideDispelAlertBanner, 1500);
+            } else if (player.jobType === 'dark_knight' && isDkDispelActive) {
+                isDkDispelActive = false;
+                dkDispelTimer = 5.0 + Math.random() * 5.0;
+                hideDispelAlertBanner();
+                SoundManager.play('click');
+                triggerDispelAlertBanner("🔥 神聖之火已重新啟動！");
                 setTimeout(hideDispelAlertBanner, 1500);
             }
         }
@@ -1430,6 +1501,14 @@ window.addEventListener('load', () => {
             triggerDispelAlertBanner("✨ 魔心防禦已重新啟動！");
             setTimeout(hideDispelAlertBanner, 1500);
         }
+        if (player && player.jobType === 'dark_knight' && isDkDispelActive) {
+            isDkDispelActive = false;
+            dkDispelTimer = 5.0 + Math.random() * 5.0;
+            hideDispelAlertBanner();
+            SoundManager.play('click');
+            triggerDispelAlertBanner("🔥 神聖之火已重新啟動！");
+            setTimeout(hideDispelAlertBanner, 1500);
+        }
     });
 });
 
@@ -1493,6 +1572,8 @@ function initGame(playerName, setupId) {
     isQuizActive = false;
     isMageDispelActive = false;
     mageDispelTimer = 5.0 + Math.random() * 5.0; // 改為 5~10 秒後首次發動
+    isDkDispelActive = false;
+    dkDispelTimer = 5.0 + Math.random() * 5.0; 
     document.getElementById("chat-box-container").style.display = "none";
     hideAlertBanner();
     hideDispelAlertBanner();
@@ -1858,6 +1939,23 @@ function updateBossSkills(dt) {
             if (mageDispelTimer <= 0) {
                 isMageDispelActive = false;
                 player.takeDamage("未能及時補上魔心防禦，遭到秒殺");
+            }
+        }
+    }
+    if (player.jobType === 'dark_knight' && !isGameOver) {
+        if (!isDkDispelActive) {
+            dkDispelTimer -= dt;
+            if (dkDispelTimer <= 0) {
+                isDkDispelActive = true;
+                dkDispelTimer = 2.0; // 2秒反應時間
+                triggerDispelAlertBanner("🔥 龍王消除了你的【神聖之火】！快按 Q 鍵重新施放！");
+                SoundManager.play('warning');
+            }
+        } else {
+            dkDispelTimer -= dt;
+            if (dkDispelTimer <= 0) {
+                isDkDispelActive = false;
+                player.takeDamage("未能及時補上神聖之火，體力不支遭到秒殺");
             }
         }
     }
