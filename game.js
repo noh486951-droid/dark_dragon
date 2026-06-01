@@ -451,8 +451,8 @@ const StartingSetup = {
     shadower_2: { job: "shadower", x: 835, y: 440, label: "神偷2" },        // 右中大台
     buccaneer: { job: "pirate", x: 200, y: 585, label: "拳霸" },         // 地面極左
     hero_2: { job: "warrior", x: 450, y: 585, label: "英雄2" },          // 地面中左
-    darkknight_1: { job: "dark_knight", x: 550, y: 585, label: "黑騎1" },    // 地面中右
-    darkknight_2: { job: "dark_knight", x: 700, y: 585, label: "黑騎2" },    // 地面右
+    darkknight_1: { job: "dark_knight", x: 550, y: 500, label: "黑騎1" },    // 地面中右
+    darkknight_2: { job: "dark_knight", x: 700, y: 500, label: "黑騎2" },    // 地面右
     marksman: { job: "archer", x: 835, y: 550, label: "神射手" },        // 右下大台
     nightlord: { job: "thief", x: 290, y: 270, label: "夜使者" },        // 左高浮島
     bowmaster: { job: "archer", x: 250, y: 430, label: "箭神" }          // 左低浮島
