@@ -2675,9 +2675,24 @@ function triggerGameOver(isSuccess, reason = "") {
     saveScore(playerName, player.config.className, finalSuccess, survivalTime, dpsHits);
 }
 
-// 排行榜分數保存 (LocalStorage)
-function saveScore(name, job, isSuccess, time, hits) {
-    let leaderboard = JSON.parse(localStorage.getItem('ht_dodge_leaderboard_v2')) || [];
+// 全球排行榜 KVDB URL
+const KVDB_URL = "https://kvdb.io/AJJuTMf78x1XYnzmWWEM8V/leaderboard";
+
+// 排行榜分數保存 (Global KVDB)
+async function saveScore(name, job, isSuccess, time, hits) {
+    let leaderboard = [];
+    try {
+        // 先抓取目前最新的成績
+        let res = await fetch(KVDB_URL);
+        if (res.ok) {
+            leaderboard = await res.json();
+        } else {
+            leaderboard = JSON.parse(localStorage.getItem('ht_dodge_leaderboard_v2')) || [];
+        }
+    } catch (e) {
+        console.error("無法讀取雲端排行榜，退回本地", e);
+        leaderboard = JSON.parse(localStorage.getItem('ht_dodge_leaderboard_v2')) || [];
+    }
     
     // 加入本次紀錄
     leaderboard.push({
@@ -2706,14 +2721,39 @@ function saveScore(name, job, isSuccess, time, hits) {
     // 最多留 15 筆
     leaderboard = leaderboard.slice(0, 15);
     localStorage.setItem('ht_dodge_leaderboard_v2', JSON.stringify(leaderboard));
+
+    // 寫回雲端
+    try {
+        await fetch(KVDB_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(leaderboard)
+        });
+    } catch (e) {
+        console.error("無法儲存至雲端排行榜", e);
+    }
 }
 
-// 排行榜 UI 載入與填充
-function loadLeaderboard() {
+// 排行榜 UI 載入與填充 (Global KVDB)
+async function loadLeaderboard() {
     const list = document.getElementById("leaderboard-list");
     if (!list) return;
 
-    const leaderboard = JSON.parse(localStorage.getItem('ht_dodge_leaderboard_v2')) || [];
+    list.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #64748b;">🔄 載入全球排行榜中...</td></tr>`;
+
+    let leaderboard = [];
+    try {
+        const res = await fetch(KVDB_URL);
+        if (res.ok) {
+            leaderboard = await res.json();
+            localStorage.setItem('ht_dodge_leaderboard_v2', JSON.stringify(leaderboard));
+        } else {
+            leaderboard = JSON.parse(localStorage.getItem('ht_dodge_leaderboard_v2')) || [];
+        }
+    } catch (e) {
+        console.error("無法載入雲端排行榜，讀取本地:", e);
+        leaderboard = JSON.parse(localStorage.getItem('ht_dodge_leaderboard_v2')) || [];
+    }
     
     if (leaderboard.length === 0) {
         list.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #64748b;">暫無特訓紀錄，等待您的挑戰！</td></tr>`;
