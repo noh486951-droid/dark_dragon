@@ -2114,19 +2114,28 @@ function drawGame() {
         ctx.restore();
     }
 
-    // 3. 繪製紅閃警告背景柱
+    // 3. 繪製紅閃警告背景柱 (明顯閃爍與警告標語)
     if (redLightningWarningActive) {
         ctx.save();
-        ctx.fillStyle = "rgba(239, 68, 68, 0.06)";
+        const blinkAlpha = 0.2 + Math.abs(Math.sin(Date.now() / 80)) * 0.3; // 0.2 ~ 0.5 強烈閃爍
+        ctx.fillStyle = `rgba(255, 0, 0, ${blinkAlpha})`;
         redLightningXRanges.forEach(range => {
             ctx.fillRect(range.min, 0, range.max - range.min, canvas.height);
             // 邊線
-            ctx.strokeStyle = "rgba(239, 68, 68, 0.2)";
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = `rgba(255, 0, 0, ${blinkAlpha + 0.4})`;
+            ctx.lineWidth = 3;
             ctx.beginPath();
             ctx.moveTo(range.min, 0); ctx.lineTo(range.min, canvas.height);
             ctx.moveTo(range.max, 0); ctx.lineTo(range.max, canvas.height);
             ctx.stroke();
+            
+            // 在柱子中間加上警告圖示
+            ctx.fillStyle = `rgba(255, 255, 0, ${blinkAlpha + 0.4})`;
+            ctx.font = "bold 24px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("⚠️", range.center, 150);
+            ctx.fillText("⚠️", range.center, 350);
+            ctx.fillText("⚠️", range.center, 550);
         });
         ctx.restore();
     }
