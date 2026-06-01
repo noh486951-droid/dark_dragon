@@ -1834,10 +1834,10 @@ function updateBossSkills(dt) {
         // 全圖震動
         screenShake = 15;
 
-        // 判定：只要 X 座標在中央範圍內，不論高度都會被烤焦
+        // 判定：只要 X 座標在中央範圍內，且在下半部 (y > 380)，就會被烤焦 (最上層平台安全)
         const pxCenter = player.x + player.width/2;
-        if (pxCenter >= fireMinX && pxCenter <= fireMaxX) {
-            player.takeDamage(`未能及時逃到兩側角落，在中央被龍王大噴火燒死`);
+        if (pxCenter >= fireMinX && pxCenter <= fireMaxX && (player.y + player.height) > 400) {
+            player.takeDamage(`未能及時逃到兩側或高處，被龍王下半部大噴火燒死`);
         }
     }
 
@@ -2164,19 +2164,21 @@ function drawGame() {
         ctx.restore();
     }
 
-    // 4. 繪製大噴火警告背景
+    // 4. 繪製大噴火警告背景 (只有下半部)
     if (fireBreathWarningActive) {
         ctx.save();
         const fireAlpha = 0.3 + Math.sin(Date.now() / 40) * 0.2;
+        const fireStartY = 400; // 從 400 高度開始，不涵蓋最上層
         ctx.fillStyle = `rgba(255, 100, 0, ${fireAlpha})`;
-        ctx.fillRect(350, 0, 670 - 350, canvas.height);
+        ctx.fillRect(350, fireStartY, 670 - 350, canvas.height - fireStartY);
         
         // 警告邊界
         ctx.strokeStyle = `rgba(255, 60, 0, ${fireAlpha + 0.3})`;
         ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.moveTo(350, 0); ctx.lineTo(350, canvas.height);
-        ctx.moveTo(670, 0); ctx.lineTo(670, canvas.height);
+        ctx.moveTo(350, fireStartY); ctx.lineTo(350, canvas.height);
+        ctx.moveTo(670, fireStartY); ctx.lineTo(670, canvas.height);
+        ctx.moveTo(350, fireStartY); ctx.lineTo(670, fireStartY); // 頂部水平線
         ctx.stroke();
         ctx.restore();
     }
