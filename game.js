@@ -1383,6 +1383,57 @@ window.addEventListener('keyup', (e) => {
 });
 
 // ==========================================
+// 手機版虛擬按鈕事件監聽
+// ==========================================
+function bindTouchButton(btnId, keyName, actionFn) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    
+    const handleStart = (e) => {
+        e.preventDefault();
+        btn.classList.add('active');
+        keys[keyName] = true;
+        if (actionFn && player && isGameRunning && !isGameOver) {
+            actionFn();
+        }
+    };
+    
+    const handleEnd = (e) => {
+        e.preventDefault();
+        btn.classList.remove('active');
+        keys[keyName] = false;
+    };
+
+    btn.addEventListener('touchstart', handleStart, { passive: false });
+    btn.addEventListener('touchend', handleEnd, { passive: false });
+    btn.addEventListener('touchcancel', handleEnd, { passive: false });
+}
+
+// 在頁面載入後綁定，避免元素尚未產生
+window.addEventListener('load', () => {
+    // 綁定方向鍵
+    bindTouchButton('btn-up', 'ArrowUp');
+    bindTouchButton('btn-down', 'ArrowDown');
+    bindTouchButton('btn-left', 'ArrowLeft');
+    bindTouchButton('btn-right', 'ArrowRight');
+
+    // 綁定動作鍵
+    bindTouchButton('btn-alt', 'Alt', () => player.jump());
+    bindTouchButton('btn-shift', 'Shift', () => player.useSkill());
+    bindTouchButton('btn-ctrl', 'Ctrl', () => player.attack());
+    bindTouchButton('btn-q', 'q', () => {
+        if (player && player.jobType === 'mage' && isMageDispelActive) {
+            isMageDispelActive = false;
+            mageDispelTimer = 5.0 + Math.random() * 5.0;
+            hideDispelAlertBanner();
+            SoundManager.play('click');
+            triggerDispelAlertBanner("✨ 魔心防禦已重新啟動！");
+            setTimeout(hideDispelAlertBanner, 1500);
+        }
+    });
+});
+
+// ==========================================
 // 地圖選角交互入口
 // ==========================================
 

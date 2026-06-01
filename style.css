@@ -731,3 +731,132 @@ canvas {
 ::-webkit-scrollbar-thumb:hover {
     background: rgba(6, 182, 212, 0.5);
 }
+
+/* =========================================
+   手機版虛擬控制器 (Mobile Controls)
+   ========================================= */
+.mobile-controls {
+    display: none; /* 預設隱藏 */
+    position: fixed;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    width: 100%;
+    z-index: 100;
+    padding: 0 20px;
+    justify-content: space-between;
+    pointer-events: none; /* 讓中間空隙可以點擊到遊戲 */
+}
+
+/* 在觸控螢幕或小於 1024px 的螢幕上顯示 */
+@media (max-width: 1024px), (pointer: coarse) {
+    .mobile-controls {
+        display: flex;
+    }
+    
+    /* 縮小遊戲容器以適應手機螢幕並留出按鈕空間 */
+    .container {
+        zoom: 0.55 !important;
+        margin-top: -50px;
+    }
+    
+    #game-container {
+        box-shadow: none;
+        border: none;
+    }
+}
+
+.dpad {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    pointer-events: auto;
+}
+
+.dpad-btn {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    color: white;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+}
+
+.dpad-btn:active, .dpad-btn.active {
+    background: rgba(6, 182, 212, 0.5);
+    border-color: rgba(6, 182, 212, 0.8);
+    transform: scale(0.95);
+}
+
+.dpad-btn.up { top: 0; left: 50px; }
+.dpad-btn.left { top: 50px; left: 0; }
+.dpad-btn.right { top: 50px; left: 100px; }
+.dpad-btn.down { top: 100px; left: 50px; }
+
+.action-buttons {
+    position: relative;
+    width: 200px;
+    height: 150px;
+    pointer-events: auto;
+}
+
+.action-btn {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+}
+
+.action-btn:active, .action-btn.active {
+    background: rgba(239, 68, 68, 0.6);
+    border-color: rgba(239, 68, 68, 0.9);
+    transform: scale(0.92);
+}
+
+.btn-jump { bottom: 0; right: 80px; width: 70px; height: 70px; font-size: 16px; background: rgba(34, 211, 238, 0.2); border-color: rgba(34, 211, 238, 0.4); }
+.btn-attack { bottom: 30px; right: 0; width: 80px; height: 80px; font-size: 18px; background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4); }
+.btn-skill { top: 0; right: 60px; }
+.btn-guard { top: 20px; right: 130px; width: 50px; height: 50px; }
+
+/* =========================================
+   橫向螢幕提示 (Landscape Warning)
+   ========================================= */
+.landscape-warning {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: #000;
+    z-index: 9999;
+    color: white;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+/* 直向時強制顯示警告 */
+@media screen and (max-width: 1024px) and (orientation: portrait) {
+    .landscape-warning {
+        display: flex;
+    }
+}

@@ -242,6 +242,31 @@
         </div>
     </div>
 
+    <!-- 橫向螢幕提示 (僅手機直向時顯示) -->
+    <div id="landscape-warning" class="landscape-warning">
+        <div class="landscape-content">
+            <i class="fas fa-mobile-alt mb-4 text-4xl" style="transform: rotate(-90deg);"></i>
+            <h2 class="text-xl font-bold mb-2">請旋轉手機</h2>
+            <p>本遊戲需要橫向螢幕才能獲得最佳遊玩體驗</p>
+        </div>
+    </div>
+
+    <!-- 手機版虛擬控制器 -->
+    <div id="mobile-controls" class="mobile-controls">
+        <div class="dpad">
+            <button class="dpad-btn up" id="btn-up"><i class="fas fa-caret-up"></i></button>
+            <button class="dpad-btn left" id="btn-left"><i class="fas fa-caret-left"></i></button>
+            <button class="dpad-btn right" id="btn-right"><i class="fas fa-caret-right"></i></button>
+            <button class="dpad-btn down" id="btn-down"><i class="fas fa-caret-down"></i></button>
+        </div>
+        <div class="action-buttons">
+            <button class="action-btn btn-guard" id="btn-q">Q</button>
+            <button class="action-btn btn-skill" id="btn-shift">Skill</button>
+            <button class="action-btn btn-attack" id="btn-ctrl">Atk</button>
+            <button class="action-btn btn-jump" id="btn-alt">Jump</button>
+        </div>
+    </div>
+
     <!-- 載入遊戲邏輯 -->
     <script src="game.js"></script>
 </body>
