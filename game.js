@@ -1914,12 +1914,12 @@ function updateEntities(dt) {
                     b.struck = true;
                     SoundManager.play('warning'); // 或者新增雷擊音效
                     
-                    // 白雷判定區 (X 軸 +/- 20, Y軸全貫穿)
+                    // 白雷判定區 (X 軸 +/- 20, Y軸為竹筍往上 150 像素，避免在頂層被誤判)
                     const lightningBox = {
                         x: b.x - 20,
-                        y: 0,
+                        y: b.y - 150,
                         width: 40,
-                        height: b.y
+                        height: 150
                     };
                     
                     // 繪製雷擊粒子特效
