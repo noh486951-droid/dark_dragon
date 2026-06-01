@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>暗黑龍王地獄走位特訓模擬器 (Horntail Dodge Simulator)</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+TC:wght@300;500;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 霓虹背景發光點 -->
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <div class="container">
+        <!-- ================= 登入與選角畫面 ================= -->
+        <div id="setup-screen" class="screen active">
+            <header class="app-header">
+                <div class="logo">
+                    <i class="fas fa-dragon fire-breath"></i>
+                    <h1>HORNTAIL DODGE</h1>
+                    <span class="sub-logo font-cyber">特訓模擬器 V2.0</span>
+                </div>
+                <p class="tagline">100% 地形還原 • 致命三神技走位練習 • 新增攻擊打擊任務</p>
+            </header>
+
+            <div class="setup-grid">
+                <!-- 左側：玩家資訊與排行榜 -->
+                <div class="setup-panel glass-card">
+                    <h2 class="panel-title text-cyan"><i class="fas fa-id-card"></i> 特務登錄</h2>
+                    <div class="input-group">
+                        <label for="player-name">請輸入您的特務代號</label>
+                        <input type="text" id="player-name" placeholder="例如：斬龍神偷" maxlength="10">
+                    </div>
+
+                    <h2 class="panel-title text-amber" style="margin-top: 30px;"><i class="fas fa-trophy"></i> 特務生存排行榜</h2>
+                    <div class="leaderboard-container">
+                        <table id="leaderboard-table">
+                            <thead>
+                                <tr>
+                                    <th>排名</th>
+                                    <th>玩家代號</th>
+                                    <th>職業</th>
+                                    <th>存活秒數</th>
+                                    <th>擊中次數</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaderboard-list">
+                                <!-- 動態填入 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 右側：開場龍王站位選角圖 -->
+                <div class="setup-panel glass-card map-selection-panel">
+                    <h2 class="panel-title text-pink"><i class="fas fa-map-marked-alt"></i> 開場站位與職業選擇</h2>
+                    <p class="panel-desc">請點擊下方戰略地圖中的角色頭像，直接繼承該職業與開場站位：</p>
+                    
+                    <div class="interactive-map">
+                        <!-- 真實地圖背景圖片 (請使用者將圖片放入資料夾並命名為 bg.png) -->
+                        <img src="bg.png" alt="Map Background" class="map-bg-image" id="setup-bg-img" onerror="this.style.display='none'">
+                        
+                        <!-- 龍王主體裝飾背景 (若圖片載入失敗時顯示) -->
+                        <div class="boss-bg-silhouette">
+                            <i class="fas fa-dragon"></i>
+                        </div>
+                        
+
+
+                        <!-- 角色選取頭像按鈕 -->
+                        <!-- 左上高台 -->
+                        <div class="char-node" style="left: 6%; top: 22%;" onclick="selectChar('icelightning_1')" title="冰雷魔導士 - 順移 (左上高台)">
+                            <div class="char-avatar bg-mage"><i class="fas fa-wand-magic-sparkles"></i></div>
+                            <span class="char-name">冰雷1</span>
+                        </div>
+                        <div class="char-node" style="left: 18%; top: 22%;" onclick="selectChar('icelightning_2')" title="冰雷魔導士 - 順移 (左上高台)">
+                            <div class="char-avatar bg-mage"><i class="fas fa-wand-magic-sparkles"></i></div>
+                            <span class="char-name">冰雷2</span>
+                        </div>
+                        <!-- 移除了英雄1 -->
+                        <!-- 左中主平台 -->
+                        <div class="char-node" style="left: 35%; top: 44%;" onclick="selectChar('shadower_1')" title="暗影神偷 - 二段跳 (左中平台)">
+                            <div class="char-avatar bg-thief"><i class="fas fa-mask"></i></div>
+                            <span class="char-name">神偷1</span>
+                        </div>
+                        <div class="char-node" style="left: 48%; top: 44%;" onclick="selectChar('shadower_2')" title="暗影神偷 - 二段跳 (左中平台)">
+                            <div class="char-avatar bg-thief"><i class="fas fa-mask"></i></div>
+                            <span class="char-name">神偷2</span>
+                        </div>
+                        <!-- 移除了拳霸、英雄2、黑騎1、黑騎2、神射手 -->
+                        <!-- 右上高台 -->
+                        <div class="char-node" style="left: 82%; top: 32%;" onclick="selectChar('nightlord')" title="夜使者 - 二段跳 (右上高台)">
+                            <div class="char-avatar bg-thief"><i class="fas fa-star-of-david"></i></div>
+                            <span class="char-name">夜使者</span>
+                        </div>
+                        <!-- 移除了箭神 -->
+                    </div>
+                    <div class="control-help">
+                        <div class="help-item"><span class="key">←</span> <span class="key">→</span> 移動</div>
+                        <div class="help-item"><span class="key">Alt</span> 跳躍</div>
+                        <div class="help-item"><span class="key">↓</span> + <span class="key">Alt</span> 下跳</div>
+                        <div class="help-item"><span class="key">↑</span> / <span class="key">↓</span> 爬繩 (站在繩子上時)</div>
+                        <div class="help-item"><span class="key">Ctrl</span> 普攻攻擊龍王頭部</div>
+                        <div class="help-item"><span class="key">Shift</span> 職業位移特殊技</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= 遊戲運行畫面 ================= -->
+        <div id="game-screen" class="screen">
+            <!-- 頂部即時狀態列 -->
+            <div class="hud">
+                <div class="hud-item player-profile">
+                    <div id="hud-job-icon" class="job-badge bg-warrior"><i class="fas fa-shield-halved"></i></div>
+                    <div>
+                        <div id="hud-name" class="hud-label font-bold text-white">玩家名稱</div>
+                        <div id="hud-class" class="hud-value text-cyan">職業名稱</div>
+                    </div>
+                </div>
+                <div class="hud-item hp-tracker">
+                    <div class="hud-label"><i class="fas fa-heart text-red"></i> 特訓生命</div>
+                    <div id="hp-hearts" class="hearts-row">
+                        <i class="fas fa-heart heart-active"></i>
+                        <i class="fas fa-heart heart-active"></i>
+                        <i class="fas fa-heart heart-active"></i>
+                    </div>
+                </div>
+                <div class="hud-item dps-tracker">
+                    <div class="hud-label">對龍王有效打擊次數 (目標 15 次)</div>
+                    <div class="progress-bar-container">
+                        <div id="dps-progress" class="progress-fill" style="width: 0%;"></div>
+                        <span id="dps-text" class="progress-text font-cyber">0 / 15</span>
+                    </div>
+                </div>
+                <div class="hud-item bamboo-tracker">
+                    <div class="hud-label"><i class="fas fa-leaf text-green" style="color:#22c55e;"></i> 白雷竹筍 (攻擊段數)</div>
+                    <div id="bamboo-count" class="hud-value font-cyber text-green" style="color:#22c55e; text-shadow: 0 0 10px #22c55e;">0 / 3</div>
+                </div>
+                <div class="hud-item skill-cooldown">
+                    <div class="hud-label">位移技能 CD (Shift)</div>
+                    <div class="cd-display">
+                        <div id="cd-bar" class="cd-fill"></div>
+                        <span id="cd-text" class="cd-text-label">READY</span>
+                    </div>
+                </div>
+                <div class="hud-item timer-tracker">
+                    <div class="hud-label">存活時間</div>
+                    <div id="game-timer" class="hud-value font-cyber text-yellow">0.0s</div>
+                </div>
+                <div class="hud-item clock-tracker">
+                    <div class="hud-label"><i class="fas fa-clock"></i> 挑戰倒數</div>
+                    <div id="game-clock" class="hud-value font-cyber text-pink" style="text-shadow: 0 0 10px #ec4899;">30:00</div>
+                </div>
+            </div>
+
+            <!-- 警告告示牌 (置中浮出) -->
+            <div id="alert-banner" class="alert-banner">
+                <span id="alert-text">紅咬警告！即將在空中判定！</span>
+            </div>
+
+            <!-- 專屬魔心防禦消除警告 -->
+            <div id="dispel-alert-banner" class="alert-banner" style="background: rgba(147, 51, 234, 0.9); border-color: #d8b4fe; box-shadow: 0 0 25px rgba(147, 51, 234, 0.8); top: 200px;">
+                <span id="dispel-alert-text"></span>
+            </div>
+
+            <!-- Canvas 容器 -->
+            <div class="canvas-wrapper">
+                <canvas id="gameCanvas" width="1024" height="680"></canvas>
+                <!-- 玩家自訂 GIF 角色 -->
+                <img id="player-gif" src="player.gif" alt="Player GIF" onerror="this.style.display='none'; window.playerGifLoaded = false;" onload="window.playerGifLoaded = true;" style="display: none; position: absolute; z-index: 20; pointer-events: none;">
+                
+                <!-- 聊天輸入框 (特定技能/事件觸發) -->
+                <div id="chat-box-container" style="display: none; position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 30; background: rgba(15, 23, 42, 0.95); padding: 15px 25px; border-radius: 12px; border: 2px solid #38bdf8; box-shadow: 0 0 20px rgba(56,189,248,0.5); text-align: center;">
+                    <div id="chat-prompt" style="margin-bottom: 12px; font-weight: bold; color: #fde047; font-size: 18px;">請輸入煙霧彈正確消失時間：</div>
+                    <input type="text" id="chat-input" placeholder="例如 26:30 或是 2630" style="padding: 10px; border-radius: 8px; border: 1px solid #94a3b8; outline: none; font-size: 20px; text-align: center; width: 220px; font-weight: bold; font-family: monospace;">
+                    <div id="chat-timer" style="margin-top: 10px; color: #ef4444; font-weight: bold; font-size: 16px;">剩餘作答時間：7.0s</div>
+                </div>
+            </div>
+
+            <!-- 底部返回按鈕 -->
+            <div class="game-footer">
+                <button class="btn btn-secondary" onclick="exitGame()"><i class="fas fa-arrow-left"></i> 放棄特訓並返回</button>
+            </div>
+        </div>
+
+        <!-- ================= 遊戲說明視窗 (Modal) ================= -->
+        <div id="intro-modal" class="modal-overlay active">
+            <div class="modal-content glass-card">
+                <div class="result-header">
+                    <h2 class="text-cyan"><i class="fas fa-book-open"></i> 遊玩說明</h2>
+                </div>
+                <div class="result-stats" style="text-align: left; margin-bottom: 20px; line-height: 1.8;">
+                    <p>歡迎來到 HORNTAIL DODGE 特訓模擬器！</p>
+                    <p>• <b>操作</b>：方向鍵移動，<span class="text-yellow">Alt</span> 跳躍，<span class="text-yellow">Ctrl</span> 攻擊，<span class="text-yellow">Shift</span> 位移技能。</p>
+                    <p>• <b>目標</b>：閃避紅咬、紅閃、黑鎖、大噴火，並盡可能攻擊龍王頭部！</p>
+                    <p>• <b>限制</b>：請務必輸入您的特務代號才能進入特訓。注意：強勢職業「法師」只有 <span class="text-pink">1 條命</span>，且龍王會隨機消除魔心防禦，需在 2 秒內按下 <span class="text-yellow">Q</span> 鍵補回！</p>
+                    <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 0;">
+                    <p style="text-align: right; font-weight: bold;" class="text-cyan">作者：咕咕嘎嘎</p>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-primary" onclick="document.getElementById('intro-modal').classList.remove('active')"><i class="fas fa-check"></i> 我了解了</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= 結算視窗 (Modal) ================= -->
+        <div id="result-modal" class="modal-overlay">
+            <div class="modal-content glass-card">
+                <div class="result-header">
+                    <div id="result-icon-container" class="result-icon-box success">
+                        <i id="result-icon" class="fas fa-trophy"></i>
+                    </div>
+                    <h2 id="result-title">特訓成功！</h2>
+                    <p id="result-subtitle" class="font-cyber">存活達成並完成擊殺目標</p>
+                </div>
+                
+                <div class="result-stats">
+                    <div class="stat-card">
+                        <div class="stat-label">存活時間</div>
+                        <div id="stat-time" class="stat-value text-yellow">60.0s</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">累積打擊次數</div>
+                        <div id="stat-hits" class="stat-value text-cyan">18 次</div>
+                    </div>
+                    <div class="stat-card" style="grid-column: span 2;">
+                        <div class="stat-label">特務評語 / 死因分析</div>
+                        <div id="stat-reason" class="stat-desc">在底層地面被【紅閃】垂直落雷擊中。雷擊範圍為左右外側 X 軸！</div>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn btn-primary" onclick="restartGame()"><i class="fas fa-redo"></i> 再次特訓</button>
+                    <button class="btn btn-secondary" onclick="closeResultModal()"><i class="fas fa-home"></i> 返回選角</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 載入遊戲邏輯 -->
+    <script src="game.js"></script>
+</body>
+</html>
