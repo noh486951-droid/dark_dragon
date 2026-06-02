@@ -56,13 +56,15 @@
                 </div>
 
                 <!-- 右側：開場龍王站位選角圖 -->
-                <div class="setup-panel glass-card map-selection-panel">
-                    <h2 class="panel-title text-pink" style="display: flex; justify-content: space-between; align-items: center;">
-                        <span><i class="fas fa-map-marked-alt"></i> 開場站位與職業選擇</span>
-                        <button class="btn btn-secondary" onclick="openKeyBindingsModal()" style="padding: 5px 10px; font-size: 0.8rem;">
+                <div class="setup-panel glass-card map-selection-panel" style="position: relative;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h2 class="panel-title text-pink" style="margin-bottom: 0;">
+                            <i class="fas fa-map-marked-alt"></i> 開場站位與職業選擇
+                        </h2>
+                        <button class="btn btn-secondary" onclick="openKeyBindingsModal()" style="padding: 5px 10px; font-size: 0.8rem; position: relative; z-index: 50; cursor: pointer;">
                             <i class="fas fa-cog"></i> 按鍵設定
                         </button>
-                    </h2>
+                    </div>
                     <p class="panel-desc">請點擊下方戰略地圖中的角色頭像，直接繼承該職業與開場站位：</p>
                     
                     <div class="interactive-map">
