@@ -396,12 +396,17 @@ tr:hover {
 }
 @media (max-width: 1000px) {
     .hud {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
     }
 }
 @media (max-width: 650px) {
     .hud {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    .hud-item {
+        padding: 8px 10px;
     }
 }
 .hud-item {
@@ -757,7 +762,6 @@ canvas {
     /* 縮小遊戲容器以適應手機螢幕並留出按鈕空間 */
     .container {
         zoom: 0.55 !important;
-        margin-top: -50px;
     }
     
     #game-container {
