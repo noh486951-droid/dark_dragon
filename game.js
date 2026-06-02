@@ -334,7 +334,7 @@ const JobConfigs = {
         speed: 2.5,
         jumpForce: 9.5,
         attackRange: 250,
-        attackCooldown: 500,
+        attackCooldown: 350,
         skillCooldown: 0, 
         color: "#a78bfa",
         description: "二段跳 (Alt)：空中跳躍時再次按下 Alt 即可朝前滑行大跳躍。",
@@ -968,7 +968,7 @@ class Player {
             });
 
         } else if (this.jobType === 'thief') { // 盜賊/夜使者：水平飛鏢
-            for (let n = 0; n < 1 + this.lightningBuff; n++) {
+            for (let n = 0; n < 2 + this.lightningBuff; n++) {
                 projectiles.push(new Projectile(
                     this.x + facingOffset - n * 15 * this.facing,
                     this.y + this.height/2 - n * 5,
