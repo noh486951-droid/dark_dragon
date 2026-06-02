@@ -1441,14 +1441,19 @@ window.addEventListener('keydown', (e) => {
         return;
     }
 
-    // 阻擋方向鍵與空白鍵的網頁滾動行為
-    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " ", "Alt"].includes(e.key)) {
-        e.preventDefault();
+    // 防止因為瀏覽器原生的快捷鍵干擾，取消預設行為（特別是被綁定的按鍵）
+    for (let act in ActionKeys) {
+        if (isActionMatch(e.key, act)) {
+            // 對於方向鍵跟空白鍵等會捲動網頁的，強制 preventDefault
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'Space'].includes(e.key)) {
+                e.preventDefault();
+            }
+        }
     }
-    
-    // Q鍵 魔心防禦
-    if ((e.key === 'q' || e.key === 'Q') && !keys['q']) {
-        keys['q'] = true;
+
+    // 檢查自訂按鍵，為了避免長按連續觸發，我們用 keys 物件紀錄狀態
+    if (isActionMatch(e.key, 'buff') && !isActionActive('buff')) {
+        keys[e.key] = true; // 先設為 true，這樣接下來的判斷才會生效
         if (player && isGameRunning && !isGameOver && !isQuizActive) {
             if (player.jobType === 'mage' && isMageDispelActive) {
                 isMageDispelActive = false;
@@ -1468,25 +1473,25 @@ window.addEventListener('keydown', (e) => {
         }
     }
 
-    // Alt 跳躍
-    if (e.key === 'Alt' && !keys['Alt']) {
-        keys['Alt'] = true;
+    // 跳躍
+    if (isActionMatch(e.key, 'jump') && !isActionActive('jump')) {
+        keys[e.key] = true;
         if (player && isGameRunning && !isGameOver) {
             player.jump();
         }
     }
     
-    // Shift 位移技能
-    if (e.key === 'Shift' && !keys['Shift']) {
-        keys['Shift'] = true;
+    // 位移技能
+    if (isActionMatch(e.key, 'skill') && !isActionActive('skill')) {
+        keys[e.key] = true;
         if (player && isGameRunning && !isGameOver) {
             player.useSkill();
         }
     }
 
-    // Ctrl 攻擊
-    if (e.key === 'Control' || e.key === 'Ctrl') {
-        keys['Ctrl'] = true;
+    // 攻擊
+    if (isActionMatch(e.key, 'attack')) {
+        keys[e.key] = true;
         if (player && isGameRunning && !isGameOver) {
             player.attack();
         }
@@ -1497,10 +1502,6 @@ window.addEventListener('keydown', (e) => {
 
 window.addEventListener('keyup', (e) => {
     keys[e.key] = false;
-    if (e.key === 'Alt') keys['Alt'] = false;
-    if (e.key === 'Shift') keys['Shift'] = false;
-    if (e.key === 'Control' || e.key === 'Ctrl') keys['Ctrl'] = false;
-    if (e.key === 'q' || e.key === 'Q') keys['q'] = false;
 });
 
 // ==========================================
