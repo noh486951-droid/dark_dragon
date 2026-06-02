@@ -348,8 +348,8 @@ const JobConfigs = {
         triggerDoubleJump(player) {
             if (player.isGrounded || player.isClimbing || player.hasDoubleJumped) return false;
             player.hasDoubleJumped = true;
-            player.vy = -6.5; // 給予一定高度
-            player.vx = 22 * player.facing; // 猛烈向前噴射 (速度加快)
+            player.vy = -7.5; // 給予一定高度
+            player.vx = 28 * player.facing; // 猛烈向前噴射 (速度加快)
             SoundManager.play('jump');
 
             // 產生紫色旋風粒子
@@ -968,7 +968,7 @@ class Player {
             });
 
         } else if (this.jobType === 'thief') { // 盜賊/夜使者：水平飛鏢
-            for (let n = 0; n < 2 + this.lightningBuff; n++) {
+            for (let n = 0; n < 4 + this.lightningBuff; n++) {
                 projectiles.push(new Projectile(
                     this.x + facingOffset - n * 15 * this.facing,
                     this.y + this.height/2 - n * 5,
