@@ -1372,7 +1372,8 @@ let bossHeads = [];
 
 // 特訓核心數據
 let dpsHits = 0;
-const dpsTarget = 1300; // 龍王血量
+const bossHp = 1100; // 龍王血量
+const dpsTarget = 100; // 特訓及格目標次數
 let survivalTime = 0.0;
 let lastTime = 0;
 
@@ -1745,7 +1746,7 @@ function damageBoss(head) {
     updateBossHpBar(dpsHits);
     
     // 競速模式：只要打滿血量直接勝利
-    if (dpsHits >= dpsTarget && !isGameOver) {
+    if (dpsHits >= bossHp && !isGameOver) {
         triggerGameOver(true, "成功擊殺暗黑龍王！太神啦！");
     }
 }
@@ -2682,9 +2683,15 @@ function gameLoop(now) {
             clockEl.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         }
 
-        // 存活超過60秒，如果還沒打死就是失敗
+        // 存活超過60秒結算
         if (survivalTime >= 60.0) {
-            triggerGameOver(false, `時間到！龍王殘餘血量 ${Math.max(0, dpsTarget - dpsHits)}`);
+            if (dpsHits >= dpsTarget) {
+                // 有達到基礎打擊次數，算過關
+                triggerGameOver(true);
+            } else {
+                // 連基礎打擊次數都沒達到
+                triggerGameOver(false, `時間到！龍王殘餘血量 ${Math.max(0, bossHp - dpsHits)}，且未達基礎打擊次數(${dpsTarget})`);
+            }
         }
     }
 
@@ -2778,8 +2785,8 @@ function updateBossHpBar(hits) {
     const fill = document.getElementById("boss-hp-progress");
     const text = document.getElementById("boss-hp-text");
     if (fill && text) {
-        const remaining = Math.max(0, dpsTarget - hits);
-        const pct = (remaining / dpsTarget) * 100;
+        const remaining = Math.max(0, bossHp - hits);
+        const pct = (remaining / bossHp) * 100;
         fill.style.width = `${pct}%`;
         text.textContent = `${pct.toFixed(2)}%`;
     }
@@ -2897,7 +2904,11 @@ async function saveScore(name, job, isSuccess, time, hits) {
             isNewBetter = newRecord.isSuccess; // true (成功) > false (失敗)
         } else {
             if (newRecord.isSuccess) {
-                isNewBetter = newRecord.time < existing.time; // 成功比快
+                if (newRecord.time !== existing.time) {
+                    isNewBetter = newRecord.time < existing.time; // 成功比快
+                } else {
+                    isNewBetter = newRecord.hits > existing.hits; // 滿60秒沒殺死，比誰傷害高
+                }
             } else {
                 if (newRecord.hits !== existing.hits) {
                     isNewBetter = newRecord.hits > existing.hits; // 失敗比傷害
@@ -2922,7 +2933,8 @@ async function saveScore(name, job, isSuccess, time, hits) {
     leaderboard.sort((a, b) => {
         if (a.isSuccess !== b.isSuccess) return a.isSuccess ? -1 : 1;
         if (a.isSuccess) {
-            return a.time - b.time; // 成功比快 (小到大)
+            if (a.time !== b.time) return a.time - b.time; // 成功比快 (小到大)
+            return b.hits - a.hits; // 滿60秒沒殺死，比誰傷害高 (大到小)
         } else {
             if (b.hits !== a.hits) return b.hits - a.hits; // 失敗比傷害 (大到小)
             return b.time - a.time; // 失敗比存活 (大到小)
@@ -2970,7 +2982,10 @@ async function loadLeaderboard() {
                     if (r.isSuccess !== existing.isSuccess) {
                         isBetter = r.isSuccess;
                     } else {
-                        if (r.isSuccess) isBetter = r.time < existing.time;
+                        if (r.isSuccess) {
+                            if (r.time !== existing.time) isBetter = r.time < existing.time;
+                            else isBetter = r.hits > existing.hits;
+                        }
                         else if (r.hits !== existing.hits) isBetter = r.hits > existing.hits;
                         else isBetter = r.time > existing.time;
                     }
@@ -2983,7 +2998,10 @@ async function loadLeaderboard() {
             // 重新排序
             leaderboard.sort((a, b) => {
                 if (a.isSuccess !== b.isSuccess) return a.isSuccess ? -1 : 1;
-                if (a.isSuccess) return a.time - b.time;
+                if (a.isSuccess) {
+                    if (a.time !== b.time) return a.time - b.time;
+                    return b.hits - a.hits;
+                }
                 if (b.hits !== a.hits) return b.hits - a.hits;
                 return b.time - a.time;
             });
