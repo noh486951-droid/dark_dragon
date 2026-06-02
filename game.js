@@ -2859,6 +2859,9 @@ const KVDB_URL = "https://kvdb.io/AJJuTMf78x1XYnzmWWEM8V/leaderboard";
 
 // 排行榜分數保存 (Global KVDB)
 async function saveScore(name, job, isSuccess, time, hits) {
+    // 測試帳號不列入排行榜
+    if (name === "TEST") return;
+
     let leaderboard = [];
     try {
         // 先抓取目前最新的成績
