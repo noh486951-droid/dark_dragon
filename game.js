@@ -1760,10 +1760,35 @@ function updateBossSkills(dt) {
         redBiteWarningActive = true;
         SoundManager.play('warning');
         
-        // 抓取玩家當下位置作為攻擊目標
+        // 抓取玩家所在位置的「地面」作為攻擊目標
+        let targetY = player.y; // 預設為目前位置
+        let px = player.x + player.width / 2;
+        let py = player.y + player.height;
+        let minDiff = Infinity;
+        let foundPlatY = null;
+        
+        for (let plat of platforms) {
+            // 寬鬆判斷 X 座標 (允許一點邊緣誤差)
+            if (px >= plat.xMin - 15 && px <= plat.xMax + 15) {
+                // 尋找在玩家腳下的平台 (允許 30px 誤差，以防剛起跳)
+                if (plat.y >= py - 30) {
+                    let diff = plat.y - py;
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        foundPlatY = plat.y;
+                    }
+                }
+            }
+        }
+        
+        // 如果找到平台，就把紅咬的 Y 座標鎖定在該平台上
+        if (foundPlatY !== null) {
+            targetY = foundPlatY - player.height;
+        }
+
         redBiteTargetRect = {
             x: player.x - 30,
-            y: player.y - 40,
+            y: targetY - 40,
             width: player.width + 60,
             height: player.height + 80
         };
