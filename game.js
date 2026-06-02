@@ -213,7 +213,7 @@ const JobConfigs = {
         speed: 1.9,
         jumpForce: 8.5,
         attackRange: 280,
-        attackCooldown: 400,
+        attackCooldown: 300,
         skillCooldown: 800, // 順移 CD 極短
         color: "#22d3ee",
         description: "順移 (Shift)：按住方向鍵 (← → ↑ ↓) + Shift，瞬間移動 120px，無視沿途傷害。",
