@@ -2952,7 +2952,33 @@ async function loadLeaderboard() {
     try {
         const res = await fetch(KVDB_URL);
         if (res.ok) {
-            leaderboard = await res.json();
+            let rawData = await res.json();
+            
+            // 去重覆邏輯：防止舊版客戶端上傳重複資料（同時也幫忙清理壞掉的資料）
+            let map = new Map();
+            rawData.forEach(r => {
+                let key = r.name + '|' + r.job;
+                if (!map.has(key)) {
+                    map.set(key, r);
+                } else {
+                    let existing = map.get(key);
+                    let isBetter = false;
+                    if (r.isSuccess !== existing.isSuccess) isBetter = r.isSuccess;
+                    else if (r.time !== existing.time) isBetter = r.time > existing.time;
+                    else isBetter = r.hits > existing.hits;
+                    
+                    if (isBetter) map.set(key, r);
+                }
+            });
+            leaderboard = Array.from(map.values());
+            
+            // 重新排序
+            leaderboard.sort((a, b) => {
+                if (a.isSuccess !== b.isSuccess) return a.isSuccess ? -1 : 1;
+                if (b.time !== a.time) return b.time - a.time;
+                return b.hits - a.hits;
+            });
+            
             localStorage.setItem('ht_dodge_leaderboard_v2', JSON.stringify(leaderboard));
         } else {
             leaderboard = JSON.parse(localStorage.getItem('ht_dodge_leaderboard_v2')) || [];
