@@ -1673,7 +1673,7 @@ function initGame(playerName, setupId) {
     // 更新生命
     updateHeartsUI(player.hp);
     // 更新打擊進度條
-    updateDpsBar(0);
+    updateBossHpBar(0);
 
     // 啟動主循環
     isGameRunning = true;

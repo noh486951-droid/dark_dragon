@@ -770,6 +770,17 @@ canvas {
     }
 }
 
+@media (max-width: 1024px) and (max-height: 450px) {
+    .container {
+        zoom: 0.4 !important;
+    }
+}
+@media (max-width: 1024px) and (max-height: 350px) {
+    .container {
+        zoom: 0.35 !important;
+    }
+}
+
 .dpad {
     position: relative;
     width: 150px;
