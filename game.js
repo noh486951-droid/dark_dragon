@@ -2781,7 +2781,7 @@ function updateBossHpBar(hits) {
         const remaining = Math.max(0, dpsTarget - hits);
         const pct = (remaining / dpsTarget) * 100;
         fill.style.width = `${pct}%`;
-        text.textContent = `${remaining} / ${dpsTarget}`;
+        text.textContent = `${pct.toFixed(2)}%`;
     }
 }
 
