@@ -1372,7 +1372,7 @@ let bossHeads = [];
 
 // 特訓核心數據
 let dpsHits = 0;
-const dpsTarget = 100; // 特訓目標次數
+const dpsTarget = 1300; // 龍王血量
 let survivalTime = 0.0;
 let lastTime = 0;
 
@@ -1742,7 +1742,12 @@ function damageBoss(head) {
         ));
     }
 
-    updateDpsBar(dpsHits);
+    updateBossHpBar(dpsHits);
+    
+    // 競速模式：只要打滿血量直接勝利
+    if (dpsHits >= dpsTarget && !isGameOver) {
+        triggerGameOver(true, "成功擊殺暗黑龍王！太神啦！");
+    }
 }
 
 // ==========================================
@@ -2677,9 +2682,9 @@ function gameLoop(now) {
             clockEl.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         }
 
-        // 當存活大於 60 秒時，進入特訓成功結算！
+        // 存活超過60秒，如果還沒打死就是失敗
         if (survivalTime >= 60.0) {
-            triggerGameOver(true);
+            triggerGameOver(false, `時間到！龍王殘餘血量 ${Math.max(0, dpsTarget - dpsHits)}`);
         }
     }
 
@@ -2768,14 +2773,15 @@ function updateHeartsUI(hp) {
     }
 }
 
-// 更新攻擊打擊進度條
-function updateDpsBar(hits) {
-    const fill = document.getElementById("dps-progress");
-    const text = document.getElementById("dps-text");
+// 更新龍王血條
+function updateBossHpBar(hits) {
+    const fill = document.getElementById("boss-hp-progress");
+    const text = document.getElementById("boss-hp-text");
     if (fill && text) {
-        const pct = Math.min(100, (hits / dpsTarget) * 100);
+        const remaining = Math.max(0, dpsTarget - hits);
+        const pct = (remaining / dpsTarget) * 100;
         fill.style.width = `${pct}%`;
-        text.textContent = `${hits} / ${dpsTarget}`;
+        text.textContent = `${remaining} / ${dpsTarget}`;
     }
 }
 
@@ -2788,16 +2794,8 @@ function triggerGameOver(isSuccess, reason = "") {
     isGameOver = true;
     // 移除 isGameRunning = false; 讓畫面繼續更新來播放死亡動畫
 
-    // 檢查攻擊次數門檻是否達成
-    const dpsAchieved = dpsHits >= dpsTarget;
-    let finalSuccess = isSuccess && dpsAchieved;
-    
-    // 若存活到60秒但攻擊不足，判定失敗
-    let finalReason = reason;
-    if (isSuccess && !dpsAchieved) {
-        finalSuccess = false;
-        finalReason = `存活滿60秒，但對龍王攻擊次數僅有 ${dpsHits} 次（未達合格門檻 ${dpsTarget} 次）！`;
-    }
+    const finalSuccess = isSuccess;
+    const finalReason = reason;
 
     // 播放勝敗音樂
     if (finalSuccess) {
@@ -2892,15 +2890,21 @@ async function saveScore(name, job, isSuccess, time, hits) {
         const existing = leaderboard[existingIndex];
         // 判斷新紀錄是否比較好：
         // 1. 成功 > 失敗
-        // 2. 存活時間較高
-        // 3. 攻擊次數較多
+        // 2. 成功時：花費時間越少越好 (競速)
+        // 3. 失敗時：打擊次數越多越好，其次是存活時間越長越好
         let isNewBetter = false;
         if (newRecord.isSuccess !== existing.isSuccess) {
             isNewBetter = newRecord.isSuccess; // true (成功) > false (失敗)
-        } else if (newRecord.time !== existing.time) {
-            isNewBetter = newRecord.time > existing.time;
         } else {
-            isNewBetter = newRecord.hits > existing.hits;
+            if (newRecord.isSuccess) {
+                isNewBetter = newRecord.time < existing.time; // 成功比快
+            } else {
+                if (newRecord.hits !== existing.hits) {
+                    isNewBetter = newRecord.hits > existing.hits; // 失敗比傷害
+                } else {
+                    isNewBetter = newRecord.time > existing.time; // 失敗比存活
+                }
+            }
         }
 
         if (isNewBetter) {
@@ -2915,17 +2919,14 @@ async function saveScore(name, job, isSuccess, time, hits) {
     }
 
     // 排序優先序：
-    // 1. 特訓成功者排前面
-    // 2. 存活時間高者排前面
-    // 3. 攻擊次數多者排前面
     leaderboard.sort((a, b) => {
-        if (a.isSuccess !== b.isSuccess) {
-            return a.isSuccess ? -1 : 1;
+        if (a.isSuccess !== b.isSuccess) return a.isSuccess ? -1 : 1;
+        if (a.isSuccess) {
+            return a.time - b.time; // 成功比快 (小到大)
+        } else {
+            if (b.hits !== a.hits) return b.hits - a.hits; // 失敗比傷害 (大到小)
+            return b.time - a.time; // 失敗比存活 (大到小)
         }
-        if (b.time !== a.time) {
-            return b.time - a.time;
-        }
-        return b.hits - a.hits;
     });
 
     // 最多留 15 筆
@@ -2966,9 +2967,13 @@ async function loadLeaderboard() {
                 } else {
                     let existing = map.get(key);
                     let isBetter = false;
-                    if (r.isSuccess !== existing.isSuccess) isBetter = r.isSuccess;
-                    else if (r.time !== existing.time) isBetter = r.time > existing.time;
-                    else isBetter = r.hits > existing.hits;
+                    if (r.isSuccess !== existing.isSuccess) {
+                        isBetter = r.isSuccess;
+                    } else {
+                        if (r.isSuccess) isBetter = r.time < existing.time;
+                        else if (r.hits !== existing.hits) isBetter = r.hits > existing.hits;
+                        else isBetter = r.time > existing.time;
+                    }
                     
                     if (isBetter) map.set(key, r);
                 }
@@ -2978,8 +2983,9 @@ async function loadLeaderboard() {
             // 重新排序
             leaderboard.sort((a, b) => {
                 if (a.isSuccess !== b.isSuccess) return a.isSuccess ? -1 : 1;
-                if (b.time !== a.time) return b.time - a.time;
-                return b.hits - a.hits;
+                if (a.isSuccess) return a.time - b.time;
+                if (b.hits !== a.hits) return b.hits - a.hits;
+                return b.time - a.time;
             });
             
             localStorage.setItem('ht_dodge_leaderboard_v2', JSON.stringify(leaderboard));
