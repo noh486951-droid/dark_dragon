@@ -1441,14 +1441,16 @@ window.addEventListener('keydown', (e) => {
         return;
     }
 
-    // 防止因為瀏覽器原生的快捷鍵干擾，取消預設行為（特別是被綁定的按鍵）
+    // 阻擋所有綁定按鍵與常用控制鍵的預設行為（防止 Alt+D 聚焦網址列等干擾）
+    let isBoundKey = false;
     for (let act in ActionKeys) {
         if (isActionMatch(e.key, act)) {
-            // 對於方向鍵跟空白鍵等會捲動網頁的，強制 preventDefault
-            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'Space'].includes(e.key)) {
-                e.preventDefault();
-            }
+            isBoundKey = true;
+            break;
         }
+    }
+    if (isBoundKey || ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'Space', 'Alt', 'Control', 'Shift'].includes(e.key)) {
+        e.preventDefault();
     }
 
     // 檢查自訂按鍵，為了避免長按連續觸發，我們用 keys 物件紀錄狀態
@@ -1580,6 +1582,9 @@ function selectChar(setupId) {
     }
 
     selectedSetupId = setupId;
+    
+    // 記憶玩家名稱
+    localStorage.setItem('dark_dragon_player_name', playerName);
     
     // 進入遊戲畫面
     document.getElementById("setup-screen").classList.remove("active");
@@ -3106,4 +3111,11 @@ window.addEventListener('keydown', (e) => {
 
 window.addEventListener('load', () => {
     updateKeyUI();
+    
+    // 載入上次記憶的玩家名稱
+    const savedName = localStorage.getItem('dark_dragon_player_name');
+    if (savedName) {
+        const nameInput = document.getElementById('player-name');
+        if (nameInput) nameInput.value = savedName;
+    }
 });
