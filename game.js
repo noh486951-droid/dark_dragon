@@ -221,10 +221,10 @@ const JobConfigs = {
         useSkill(player) {
             let dx = 0;
             let dy = 0;
-            if (keys['ArrowLeft'] || keys['a']) dx = -120;
-            else if (keys['ArrowRight'] || keys['d']) dx = 120;
-            else if (keys['ArrowUp'] || keys['w']) dy = -160; // 微調垂直瞬移距離
-            else if (keys['ArrowDown'] || keys['s']) dy = 160; // 微調垂直瞬移距離
+            if (isActionActive('left')) dx = -120;
+            else if (isActionActive('right')) dx = 120;
+            else if (isActionActive('up')) dy = -160; // 微調垂直瞬移距離
+            else if (isActionActive('down')) dy = 160; // 微調垂直瞬移距離
             else {
                 // 預設朝玩家面對方向順移
                 dx = 120 * player.facing;
@@ -709,9 +709,9 @@ class Player {
             this.vx = 0;
             this.vy = 0;
             
-            if (keys['ArrowUp'] || keys['w']) {
+            if (isActionActive('up')) {
                 this.vy = -2.5;
-            } else if (keys['ArrowDown'] || keys['s']) {
+            } else if (isActionActive('down')) {
                 this.vy = 2.5;
             }
 
@@ -731,15 +731,15 @@ class Player {
             }
 
             // 在爬繩上按下 Alt 鍵可以左右跳離
-            if (keys['Alt'] || keys['alt']) {
-                keys['Alt'] = false; // 消耗跳躍
-                keys['alt'] = false;
+            if (isActionActive('jump')) {
+                keys[ActionKeys.jump] = false; // 消耗跳躍 (這部分稍微不完美，但因為爬繩跳離後 isClimbing=false，不再執行跳躍判斷)
+                // TODO: 真正的解法是我們不再依賴 keys['Alt'] = false 這種寫法，而是給每個 action 加 debounce
                 this.isClimbing = false;
                 this.vy = -6.5;
-                if (keys['ArrowLeft'] || keys['a']) {
+                if (isActionActive('left')) {
                     this.vx = -4.5;
                     this.facing = -1;
-                } else if (keys['ArrowRight'] || keys['d']) {
+                } else if (isActionActive('right')) {
                     this.vx = 4.5;
                     this.facing = 1;
                 } else {
@@ -753,10 +753,10 @@ class Player {
         // 2. 一般狀態物理計算
         // 處理水平移動 (受僵直影響)
         if (!this.isSkillDashing && this.attackStiffTimer <= 0) {
-            if (keys['ArrowLeft'] || keys['a']) {
+            if (isActionActive('left')) {
                 this.vx = -this.config.speed;
                 this.facing = -1;
-            } else if (keys['ArrowRight'] || keys['d']) {
+            } else if (isActionActive('right')) {
                 this.vx = this.config.speed;
                 this.facing = 1;
             } else {
@@ -795,7 +795,7 @@ class Player {
             // 當水平距離在繩子 12px 內，且垂直範圍在繩索區間內
             if (Math.abs(this.x + this.width/2 - rope.x) < 14) {
                 if (this.y + this.height > rope.yMin && this.y < rope.yMax) {
-                    if (keys['ArrowUp'] || keys['w'] || (keys['ArrowDown'] || keys['s'])) {
+                    if (isActionActive('up') || isActionActive('down')) {
                         // 鎖定到繩子中心，進入爬繩
                         this.x = rope.x - this.width/2;
                         this.isClimbing = true;
@@ -841,7 +841,7 @@ class Player {
         if (this.isClimbing || this.attackStiffTimer > 0) return;
 
         // 處理下跳 (↓ + Alt)
-        if (this.isGrounded && (keys['ArrowDown'] || keys['s'])) {
+        if (this.isGrounded && isActionActive('down')) {
             // 找出目前站在哪個平台上
             let currentPlat = null;
             for (let plat of platforms) {
@@ -1314,6 +1314,56 @@ let canvas = document.getElementById("gameCanvas");
 let ctx = canvas.getContext("2d");
 
 let keys = {};
+
+// 自訂按鍵設定
+let ActionKeys = {
+    up: 'ArrowUp',
+    down: 'ArrowDown',
+    left: 'ArrowLeft',
+    right: 'ArrowRight',
+    jump: 'Alt',
+    attack: 'Control',
+    skill: 'Shift',
+    buff: 'q'
+};
+
+function loadKeyBindings() {
+    const saved = localStorage.getItem('dark_dragon_keybinds');
+    if (saved) {
+        try {
+            const parsed = JSON.parse(saved);
+            for (let act in parsed) {
+                if (ActionKeys[act] !== undefined) {
+                    ActionKeys[act] = parsed[act];
+                }
+            }
+        } catch (e) {}
+    }
+}
+function saveKeyBindings() {
+    localStorage.setItem('dark_dragon_keybinds', JSON.stringify(ActionKeys));
+    // 儲存後觸發事件讓UI更新 (如果有的話)
+    if (typeof updateKeyUI === 'function') updateKeyUI();
+}
+loadKeyBindings();
+
+function isActionActive(action) {
+    const customKey = ActionKeys[action].toLowerCase();
+    for (let k in keys) {
+        if (keys[k]) {
+            if (k.toLowerCase() === customKey) return true;
+            if (customKey === 'control' && k === 'Ctrl') return true;
+        }
+    }
+    return false;
+}
+
+function isActionMatch(eKey, action) {
+    const customKey = ActionKeys[action].toLowerCase();
+    if (eKey.toLowerCase() === customKey) return true;
+    if (customKey === 'control' && eKey === 'Ctrl') return true;
+    return false;
+}
 let particles = [];
 let projectiles = [];
 let damageNumbers = [];
@@ -2921,4 +2971,138 @@ document.getElementById('chat-input').addEventListener('keydown', function(e) {
         }
     }
     e.stopPropagation(); // 防止觸發其他快捷鍵
+});
+
+// ==========================================
+// 按鍵設定 UI 邏輯
+// ==========================================
+
+let isWaitingForKey = false;
+let bindingAction = null;
+
+const ActionNames = {
+    up: '上移/爬繩',
+    down: '下移/下跳',
+    left: '左移',
+    right: '右移',
+    jump: '跳躍',
+    attack: '攻擊',
+    skill: '位移技能',
+    buff: '魔心/聖火(補Buff)'
+};
+
+function openKeyBindingsModal() {
+    isWaitingForKey = false;
+    bindingAction = null;
+    document.getElementById('keybind-message').textContent = '點擊按鍵即可更改設定';
+    document.getElementById('keybindings-modal').classList.add('active');
+    renderKeyBindings();
+}
+
+function closeKeyBindingsModal() {
+    document.getElementById('keybindings-modal').classList.remove('active');
+    isWaitingForKey = false;
+    bindingAction = null;
+}
+
+function renderKeyBindings() {
+    const list = document.getElementById('keybindings-list');
+    if (!list) return;
+    
+    let html = '';
+    for (let act in ActionKeys) {
+        let displayKey = ActionKeys[act];
+        if (displayKey.startsWith('Arrow')) displayKey = displayKey.replace('Arrow', '') + '鍵';
+        if (displayKey === ' ') displayKey = 'Space';
+        
+        html += `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <span style="color: #94a3b8;">${ActionNames[act] || act}</span>
+                <button class="btn btn-secondary" style="min-width: 100px;" onclick="startBinding('${act}')">
+                    ${bindingAction === act ? '請按下按鍵...' : displayKey}
+                </button>
+            </div>
+        `;
+    }
+    list.innerHTML = html;
+}
+
+function startBinding(action) {
+    bindingAction = action;
+    isWaitingForKey = true;
+    document.getElementById('keybind-message').textContent = `請按下想要綁定為「${ActionNames[action]}」的按鍵...`;
+    renderKeyBindings();
+}
+
+function resetKeyBindings() {
+    ActionKeys = {
+        up: 'ArrowUp',
+        down: 'ArrowDown',
+        left: 'ArrowLeft',
+        right: 'ArrowRight',
+        jump: 'Alt',
+        attack: 'Control',
+        skill: 'Shift',
+        buff: 'q'
+    };
+    saveKeyBindings();
+    renderKeyBindings();
+    document.getElementById('keybind-message').textContent = '已恢復預設設定';
+}
+
+function updateKeyUI() {
+    // 更新首頁的按鍵說明
+    const uiMap = {
+        'key-left': 'left',
+        'key-right': 'right',
+        'key-up': 'up',
+        'key-down': 'down',
+        'key-down-2': 'down',
+        'key-jump': 'jump',
+        'key-jump-2': 'jump',
+        'key-attack': 'attack',
+        'key-skill': 'skill',
+        'info-jump': 'jump',
+        'info-attack': 'attack',
+        'info-skill': 'skill',
+        'info-buff': 'buff'
+    };
+    
+    for (let id in uiMap) {
+        const el = document.getElementById(id);
+        if (el) {
+            let k = ActionKeys[uiMap[id]];
+            if (k === 'Control') k = 'Ctrl';
+            if (k === ' ') k = 'Space';
+            if (k.startsWith('Arrow')) {
+                if (k === 'ArrowLeft') k = '←';
+                if (k === 'ArrowRight') k = '→';
+                if (k === 'ArrowUp') k = '↑';
+                if (k === 'ArrowDown') k = '↓';
+            }
+            el.textContent = k;
+        }
+    }
+}
+
+// 監聽綁定按鍵
+window.addEventListener('keydown', (e) => {
+    if (isWaitingForKey && bindingAction) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        let newKey = e.key;
+        // 如果是特殊按鍵可以做轉換，但瀏覽器給的 e.key 通常夠用了
+        ActionKeys[bindingAction] = newKey;
+        saveKeyBindings();
+        
+        document.getElementById('keybind-message').textContent = `已將「${ActionNames[bindingAction]}」綁定為 ${newKey === ' ' ? 'Space' : newKey}`;
+        isWaitingForKey = false;
+        bindingAction = null;
+        renderKeyBindings();
+    }
+}, true); // useCapture = true 優先攔截
+
+window.addEventListener('load', () => {
+    updateKeyUI();
 });

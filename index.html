@@ -57,7 +57,12 @@
 
                 <!-- 右側：開場龍王站位選角圖 -->
                 <div class="setup-panel glass-card map-selection-panel">
-                    <h2 class="panel-title text-pink"><i class="fas fa-map-marked-alt"></i> 開場站位與職業選擇</h2>
+                    <h2 class="panel-title text-pink" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span><i class="fas fa-map-marked-alt"></i> 開場站位與職業選擇</span>
+                        <button class="btn btn-secondary" onclick="openKeyBindingsModal()" style="padding: 5px 10px; font-size: 0.8rem;">
+                            <i class="fas fa-cog"></i> 按鍵設定
+                        </button>
+                    </h2>
                     <p class="panel-desc">請點擊下方戰略地圖中的角色頭像，直接繼承該職業與開場站位：</p>
                     
                     <div class="interactive-map">
@@ -109,12 +114,12 @@
                         </div>
                     </div>
                     <div class="control-help">
-                        <div class="help-item"><span class="key">←</span> <span class="key">→</span> 移動</div>
-                        <div class="help-item"><span class="key">Alt</span> 跳躍</div>
-                        <div class="help-item"><span class="key">↓</span> + <span class="key">Alt</span> 下跳</div>
-                        <div class="help-item"><span class="key">↑</span> / <span class="key">↓</span> 爬繩 (站在繩子上時)</div>
-                        <div class="help-item"><span class="key">Ctrl</span> 普攻攻擊龍王頭部</div>
-                        <div class="help-item"><span class="key">Shift</span> 職業位移特殊技</div>
+                        <div class="help-item"><span class="key" id="key-left">←</span> <span class="key" id="key-right">→</span> 移動</div>
+                        <div class="help-item"><span class="key" id="key-jump">Alt</span> 跳躍</div>
+                        <div class="help-item"><span class="key" id="key-down">↓</span> + <span class="key" id="key-jump-2">Alt</span> 下跳</div>
+                        <div class="help-item"><span class="key" id="key-up">↑</span> / <span class="key" id="key-down-2">↓</span> 爬繩 (站在繩子上時)</div>
+                        <div class="help-item"><span class="key" id="key-attack">Ctrl</span> 普攻攻擊龍王頭部</div>
+                        <div class="help-item"><span class="key" id="key-skill">Shift</span> 職業位移特殊技</div>
                     </div>
                 </div>
             </div>
@@ -197,6 +202,25 @@
             </div>
         </div>
 
+        <!-- ================= 按鍵設定視窗 (Modal) ================= -->
+        <div id="keybindings-modal" class="modal-overlay">
+            <div class="modal-content glass-card" style="max-width: 400px;">
+                <div class="result-header">
+                    <h2 class="text-cyan"><i class="fas fa-keyboard"></i> 按鍵設定</h2>
+                </div>
+                <div class="keybindings-list" id="keybindings-list" style="text-align: left; margin: 15px 0; display: flex; flex-direction: column; gap: 10px;">
+                    <!-- JS 生成列表 -->
+                </div>
+                <div style="text-align: center; color: #f472b6; font-size: 0.9rem; margin-bottom: 15px; min-height: 20px;" id="keybind-message">
+                    點擊按鍵即可更改設定
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="resetKeyBindings()">恢復預設</button>
+                    <button class="btn btn-primary" onclick="closeKeyBindingsModal()"><i class="fas fa-check"></i> 完成</button>
+                </div>
+            </div>
+        </div>
+
         <!-- ================= 遊戲說明視窗 (Modal) ================= -->
         <div id="intro-modal" class="modal-overlay active">
             <div class="modal-content glass-card">
@@ -205,9 +229,9 @@
                 </div>
                 <div class="result-stats" style="text-align: left; margin-bottom: 20px; line-height: 1.8;">
                     <p>歡迎來到 HORNTAIL DODGE 特訓模擬器！</p>
-                    <p>• <b>操作</b>：方向鍵移動，<span class="text-yellow">Alt</span> 跳躍，<span class="text-yellow">Ctrl</span> 攻擊，<span class="text-yellow">Shift</span> 位移技能。</p>
+                    <p>• <b>操作</b>：方向鍵移動，<span class="text-yellow" id="info-jump">Alt</span> 跳躍，<span class="text-yellow" id="info-attack">Ctrl</span> 攻擊，<span class="text-yellow" id="info-skill">Shift</span> 位移技能。</p>
                     <p>• <b>目標</b>：閃避紅咬、紅閃、黑鎖、大噴火，並盡可能攻擊龍王頭部！</p>
-                    <p>• <b>注意</b>：請務必輸入代號。法師/黑騎的輔助技能(魔心/聖火)會隨機解除，需在 2 秒內按 <span class="text-yellow">Q</span> 補回，否則將遭到秒殺！法師僅有 <span class="text-pink">2 條命</span>，其他為 3 條命。</p>
+                    <p>• <b>注意</b>：請務必輸入代號。法師/黑騎的輔助技能(魔心/聖火)會隨機解除，需在 2 秒內按 <span class="text-yellow" id="info-buff">Q</span> 補回，否則將遭到秒殺！法師僅有 <span class="text-pink">2 條命</span>，其他為 3 條命。</p>
                     <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 0;">
                     <p style="text-align: right; font-weight: bold;" class="text-cyan">作者：咕咕嘎嘎</p>
                 </div>
