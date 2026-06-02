@@ -2848,15 +2848,43 @@ async function saveScore(name, job, isSuccess, time, hits) {
         leaderboard = JSON.parse(localStorage.getItem('ht_dodge_leaderboard_v2')) || [];
     }
     
-    // 加入本次紀錄
-    leaderboard.push({
+    // 建立本次紀錄
+    const newRecord = {
         name: name,
         job: job,
         isSuccess: isSuccess,
         time: parseFloat(time.toFixed(1)),
         hits: hits,
         timestamp: Date.now()
-    });
+    };
+
+    // 檢查是否有同名同職業的紀錄
+    const existingIndex = leaderboard.findIndex(r => r.name === name && r.job === job);
+    if (existingIndex !== -1) {
+        const existing = leaderboard[existingIndex];
+        // 判斷新紀錄是否比較好：
+        // 1. 成功 > 失敗
+        // 2. 存活時間較高
+        // 3. 攻擊次數較多
+        let isNewBetter = false;
+        if (newRecord.isSuccess !== existing.isSuccess) {
+            isNewBetter = newRecord.isSuccess; // true (成功) > false (失敗)
+        } else if (newRecord.time !== existing.time) {
+            isNewBetter = newRecord.time > existing.time;
+        } else {
+            isNewBetter = newRecord.hits > existing.hits;
+        }
+
+        if (isNewBetter) {
+            leaderboard[existingIndex] = newRecord; // 覆蓋舊紀錄
+        } else {
+            // 沒有打破自己（同職業）的最佳紀錄，所以不重複上傳，也不洗版
+            return; 
+        }
+    } else {
+        // 沒有同名同職業的紀錄，直接加入
+        leaderboard.push(newRecord);
+    }
 
     // 排序優先序：
     // 1. 特訓成功者排前面
